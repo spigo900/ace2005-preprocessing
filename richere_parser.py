@@ -153,8 +153,22 @@ class Parser:
         return data
 
     # TODO needed for Rich ERE?
-    def find_correct_offset(self, document_text, start_index, text):
+    def find_correct_offset(self, document_text: str, start_index: int, text: str) -> int:
+        """
+        Given the document text, a start index, and some text coming from the document,
+        find the smallest offset that will make the start index correct
+        as an index into the document text.
+
+        Smallest here means smallest in absolute value. So we try 0 first, then +/-1, then +/-2,
+        etc. The maximum offset that will be tried is 70 characters.
+        :param document_text:
+        :param start_index:
+        :param text:
+        :return:
+        """
+        # Default to an offset of zero.
         offset = 0
+        # Loop over all offsets
         for i in range(0, 70):
             for j in [-1, 1]:
                 offset = i * j
@@ -164,8 +178,13 @@ class Parser:
         print('[Warning] fail to find offset! (start_index: {}, text: {}, path: {})'.format(start_index, text, self.path))
         return offset
 
-    # TODO needed for Rich ERE?
     def fix_wrong_position(self):
+        """
+        Loop over the mentions parsed and fix up their positions.
+
+        This means finding the correct offset for each mention and adding the offfset to both
+        components of that mention's position.
+        """
         for entity_mention in self.entity_mentions:
             offset = self.find_correct_offset(
                 document_text=self.document_text,
