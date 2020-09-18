@@ -139,6 +139,7 @@ class Parser:
             data.append(item)
         return data
 
+    # TODO needed for Rich ERE?
     def find_correct_offset(self, sgm_text, start_index, text):
         offset = 0
         for i in range(0, 70):
@@ -150,6 +151,7 @@ class Parser:
         print('[Warning] fail to find offset! (start_index: {}, text: {}, path: {})'.format(start_index, text, self.path))
         return offset
 
+    # TODO needed for Rich ERE?
     def fix_wrong_position(self):
         for entity_mention in self.entity_mentions:
             offset = self.find_correct_offset(
@@ -167,14 +169,6 @@ class Parser:
                 text=event_mention['trigger']['text'])
             event_mention['trigger']['position'][0] += offset1
             event_mention['trigger']['position'][1] += offset1
-
-            for argument in event_mention['arguments']:
-                offset2 = self.find_correct_offset(
-                    sgm_text=self.document_text,
-                    start_index=argument['position'][0],
-                    text=argument['text'])
-                argument['position'][0] += offset2
-                argument['position'][1] += offset2
 
     def parse_document(self, document_path):
         with open(document_path, 'r') as f:
