@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 import nltk
 
 
-ANNOTATIONS_FOLDER = 'ere'
-DOCUMENTS_FOLDER = 'source'
+ANNOTATIONS_DIRECTORY = 'ere'
+DOCUMENTS_DIRECTORY = 'source'
 
 
 class Parser:
@@ -22,7 +22,7 @@ class Parser:
         self.entity_mentions, self.event_mentions = [], []
         # Sort the paths to make the order of the mentions deterministic
         for annotation_path in self._sorted_annotation_paths(document_path.stem, annotation_paths):
-            more_entity_mentions, more_event_mentions = self.parse_xml(annotation_path)
+            more_entity_mentions, more_event_mentions = self.parse_annotations(annotation_path)
             self.entity_mentions.extend(more_entity_mentions)
             self.event_mentions.extend(more_event_mentions)
         self.sents_with_pos = self.parse_document(document_path)
@@ -46,11 +46,11 @@ class Parser:
 
     @staticmethod
     def _get_document_filepath(richere_path: Path, document_name: str) -> Path:
-        return (richere_path / DOCUMENTS_FOLDER / document_name).with_suffix('.xml')
+        return (richere_path / DOCUMENTS_DIRECTORY / document_name).with_suffix('.xml')
 
     @staticmethod
     def _get_annotation_filepaths(richere_path: Path, document_name: str) -> List[Path]:
-        return list((richere_path / ANNOTATIONS_FOLDER).glob(document_name + '*.rich_ere.xml'))
+        return list((richere_path / ANNOTATIONS_DIRECTORY).glob(document_name + '*.rich_ere.xml'))
 
     @staticmethod
     def from_data_path_and_name(richere_path: Path, document_name: str) -> "Parser":
@@ -179,9 +179,9 @@ class Parser:
                 argument['position'][0] += offset2
                 argument['position'][1] += offset2
 
-    def parse_document(self, sgm_path):
-        with open(sgm_path, 'r') as f:
-            soup = BeautifulSoup(f.read(), features='html.parser')
+    def parse_document(self, document_path):
+        with open(document_path, 'r') as f:
+            soup = BeautifulSoup(f.read())
             self.document_text = soup.text
 
             doc_type = soup.doc.doctype.text.strip()
@@ -203,7 +203,7 @@ class Parser:
 
             for sent in nltk.sent_tokenize(converted_text):
                 sents.extend(sent.split('\n\n'))
-            sents = list(filter(lambda x: len(x) > 5, sents))
+            sents = [x for x in sents if len(x) > 5]
             sents = sents[1:]
             sents_with_pos = []
             last_pos = 0
@@ -217,7 +217,7 @@ class Parser:
 
             return sents_with_pos
 
-    def parse_xml(self, xml_path):
+    def parse_annotations(self, xml_path):
         entity_mentions, event_mentions = [], []
         tree = ElementTree.parse(xml_path)
         root = tree.getroot()

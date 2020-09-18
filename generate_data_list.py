@@ -4,7 +4,7 @@ from pathlib import Path
 import random
 from typing import List, Tuple
 
-from richere_parser import DOCUMENTS_FOLDER
+from richere_parser import DOCUMENTS_DIRECTORY
 
 
 # Seed to use for permuting the list of documents.
@@ -55,7 +55,7 @@ def main(args):
 
     random.seed(RANDOM_SEED)
 
-    all_documents = [path.stem for path in (richere_path / DOCUMENTS_FOLDER).glob('*.xml')]
+    all_documents = [path.stem for path in (richere_path / DOCUMENTS_DIRECTORY).glob('*.xml')]
     permuted_documents = all_documents.copy()
     random.shuffle(permuted_documents)
     train_documents, dev_documents, test_documents = split_documents(permuted_documents)
