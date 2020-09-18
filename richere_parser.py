@@ -9,6 +9,9 @@ import nltk
 
 nltk.download('punkt')
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
 
 ANNOTATIONS_DIRECTORY = 'ere'
 DOCUMENTS_DIRECTORY = 'source'
@@ -134,7 +137,7 @@ class Parser:
                         try:
                             entity_type = entity_map[argument['entity-id']]['entity-type']
                         except KeyError:
-                            print('[Warning] The entity in the other sentence is mentioned. This argument will be ignored.')
+                            logger.warning('The entity in the other sentence is mentioned. This argument will be ignored.')
                             continue
 
                         event_arguments.append({
@@ -175,7 +178,7 @@ class Parser:
                 if document_text[start_index + offset:start_index + offset + len(text)] == text:
                     return offset
 
-        print('[Warning] fail to find offset! (start_index: {}, text: {}, path: {})'.format(start_index, text, self.path))
+        logger.warning('[Warning] fail to find offset! (start_index: {}, text: {}, path: {})'.format(start_index, text, self.path))
         return offset
 
     def fix_wrong_position(self):
