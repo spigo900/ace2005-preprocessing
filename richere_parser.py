@@ -228,39 +228,9 @@ class Parser:
             pass
 
         self._parse_annotation_type(root, 'entities', 'entity', found_entity)
-        # entities = root.find('entities')
-        # for child in entities:
-        #     if child.tag == 'entity':
-        #         entity_mentions.extend(self.parse_entity_tag(child))
-        #     else:
-        #         raise RuntimeError(f'While parsing entities, found unexpected child tag {child.tag}')
-
         self._parse_annotation_type(root, 'fillers', 'filler', found_filler)
-        # fillers = root.find('fillers')
-        # for child in fillers:
-        #     if child.tag == 'filler':
-        #         # TODO handle fillers
-        #         pass
-        #     else:
-        #         raise RuntimeError(f'While parsing fillers, found unexpected child tag {child.tag}')
-
         self._parse_annotation_type(root, 'relations', 'relation', found_relation)
-        # relations = root.find('relations')
-        # for child in relations:
-        #     if child.tag == 'relation':
-        #         # TODO handle relations
-        #         pass
-        #     else:
-        #         raise RuntimeError(f'While parsing relations, found unexpected child tag {child.tag}')
-
         self._parse_annotation_type(root, 'hoppers', 'hopper', found_hopper)
-        # hoppers = root.find('hoppers')
-        # for child in hoppers:
-        #     if child.tag == 'hopper':
-        #         # TODO handle hoppers properly
-        #         event_mentions.extend(self.parse_event_tag(child))
-        #     else:
-        #         raise RuntimeError(f'While parsing hoppers, found unexpected child tag {child.tag}')
 
         return entity_mentions, event_mentions
 
