@@ -61,11 +61,11 @@ class Parser:
     def _get_and_verify_paths(richere_path: Path, document_name: str) -> Tuple[Path, List[Path]]:
         document_path = Parser._get_document_filepath(richere_path, document_name)
         if not document_path.exists():
-            raise RuntimeError(f"No annotations found in {document_path} for document {document_name}.")
+            raise RuntimeError(f"No such document {document_name} found at {document_path} in {richere_path}.")
 
         annotation_paths = Parser._get_annotation_filepaths(richere_path, document_name)
         if not annotation_paths:
-            raise RuntimeError(f"No annotations found in {document_path} for document {document_name}.")
+            raise RuntimeError(f"No annotations found in {richere_path} for document {document_name}.")
         return document_path, annotation_paths
 
     @staticmethod
