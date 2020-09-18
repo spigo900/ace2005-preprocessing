@@ -229,7 +229,7 @@ class Parser:
 
         def found_hopper(hopper):
             # TODO handle properly
-            event_mentions.extend(self.parse_event_tag(event))
+            event_mentions.extend(self.parse_event_tag(hopper))
 
         def found_relation(relation):
             # TODO handle properly
