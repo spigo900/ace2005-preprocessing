@@ -3,8 +3,6 @@ import copy
 import json
 from pathlib import Path
 import re
-# Can I delete this import, or does importing traceback have a side effect?
-import traceback
 from typing import Tuple, List
 
 from stanfordcorenlp import StanfordCoreNLP

@@ -2,7 +2,6 @@ from typing import List, Tuple
 from pathlib import Path
 from xml.etree import ElementTree
 import json
-import re
 
 from bs4 import BeautifulSoup
 import nltk
