@@ -333,8 +333,8 @@ class Parser:
         for child in node:
             if child.tag == 'event_mention':
                 event_mention = dict()
-                event_mention['event_type'] = '{}:{}'.format(node.attrib['type'], node.attrib['subtype'])
-                event_mention['realis'] = node.attrib['realis']
+                event_mention['event_type'] = '{}:{}'.format(child.attrib['type'], child.attrib['subtype'])
+                event_mention['realis'] = child.attrib['realis']
                 event_mention['arguments'] = []
                 for child2 in child:
                     if child2.tag == 'trigger':
@@ -346,14 +346,27 @@ class Parser:
                             'position': [start, end],
                         }
                     elif child2.tag == 'em_arg':
-                        # TODO position not explicitly given, have to figure out from the entity mention ids
-                        event_mention['arguments'].append({
+                        # There are two cases: Either the argument is an entity or it's a filler
+                        argument = {
                             'text': child2.text,
                             'role': child2.attrib['role'],
                             'realis': child2.attrib['realis'],
-                            'entity-id': child2.attrib['entity_id'],
-                            'entity-mention-id': child2.attrib['entity_mention_id'],
-                        })
+                        }
+                        if 'entity_id' in child2.attrib:
+                            # TODO position not explicitly given, have to figure out from the entity mention ids
+                            argument.update({
+                                'entity-id': child2.attrib['entity_id'],
+                                'entity-mention-id': child2.attrib['entity_mention_id'],
+                            })
+                        elif 'filler_id' in child2.attrib:
+                            # TODO position not explicitly given, have to figure out from the filler ids?
+                            argument.update({
+                                'filler-id': child2.attrib['filler_id'],
+                            })
+                        else:
+                            raise RuntimeError(f'Got em_arg {child2}, but it is neither an entity nor a filler.')
+
+                        event_mention['arguments'].append(argument)
                     else:
                         raise RuntimeError(f'While parsing event mention, found unexpected child tag {child2.tag}.')
                 event_mentions.append(event_mention)
