@@ -98,10 +98,15 @@ class Parser:
 
             item['sentence'] = item['sentence'].strip()
 
+            # Maintain a mapping from entity IDs to entity mentions.
+            #
+            # Note that this only maps the entity ID to SOME mention in the sentence; if there is
+            # more than one mention of the same entity then only the last is kept.
             entity_map = dict()
             item['golden-entity-mentions'] = []
             item['golden-event-mentions'] = []
 
+            # Include any entity mentions whose bounds are strictly inside the sentence.
             for entity_mention in self.entity_mentions:
                 entity_position = entity_mention['position']
 
@@ -115,10 +120,16 @@ class Parser:
                     })
                     entity_map[entity_mention['entity-id']] = entity_mention
 
+            # Include any event mentions whose bounds are strictly inside the sentence.
+            #
+            # TODO This might have to change for RichERE -- we might want to allow events not
+            #  mentioned directly in the sentence? I am not sure if this is a thing.
             for event_mention in self.event_mentions:
                 event_position = event_mention['trigger']['position']
                 if text_position[0] <= event_position[0] and event_position[1] <= text_position[1]:
                     event_arguments = []
+                    # TODO I will *probably* want to make sure event arguments get appended to entity
+                    #  mentions even when they're not strictly in the sentence
                     for argument in event_mention['arguments']:
                         try:
                             entity_type = entity_map[argument['entity-id']]['entity-type']
