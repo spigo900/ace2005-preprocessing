@@ -1,8 +1,7 @@
-from pathlib import Path
 import argparse
 import copy
-import os
 import json
+from pathlib import Path
 import re
 # Can I delete this import, or does importing traceback have a side effect?
 import traceback
@@ -17,22 +16,25 @@ from parser import Parser
 DATA_LIST = Path('./data_list.csv')
 
 
-def get_data_paths(richere_path: Path) -> Tuple[List[Path], List[Path], List[Path]]:
-    test_files, dev_files, train_files = [], [], []
+def get_document_names(richere_path: Path) -> Tuple[List[str], List[str], List[str]]:
+    test_documents, dev_documents, train_documents = [], [], []
     with DATA_LIST.open(mode='r') as csv_file:
         rows = csv_file.readlines()
         for row in rows[1:]:
             items = row.replace('\n', '').split(',')
-            data_type, name = items
+            data_type, document_name = items
 
-            path = richere_path / name
+            # Verify the document is valid -- that it exists in the data path and has some
+            # annotations associated with it
+            Parser.verify_document(richere_path, document_name)
+
             if data_type == 'test':
-                test_files.append(path)
+                test_documents.append(document_name)
             elif data_type == 'dev':
-                dev_files.append(path)
+                dev_documents.append(document_name)
             elif data_type == 'train':
-                train_files.append(path)
-    return test_files, dev_files, train_files
+                train_documents.append(document_name)
+    return test_documents, dev_documents, train_documents
 
 
 def find_token_index(tokens, start_pos, end_pos, phrase):
@@ -97,14 +99,14 @@ def verify_result(data):
     print('Complete verification')
 
 
-def preprocessing(data_type, files):
+def preprocessing(richere_path: Path, data_type: str, documents: List[str]):
     result = []
     event_count, entity_count, sent_count, argument_count = 0, 0, 0, 0
 
     print('=' * 20)
     print('[preprocessing] type: ', data_type)
-    for file in tqdm(files):
-        parser = Parser(path=file)
+    for document in tqdm(documents):
+        parser = Parser.from_data_path_and_name(richere_path=richere_path, document_name=document)
 
         entity_count += len(parser.entity_mentions)
         event_count += len(parser.event_mentions)
@@ -223,20 +225,21 @@ def preprocessing(data_type, files):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', help="Path of ACE2005 English data", default='./data/ace_2005_td_v7/data/English', type=Path)
+    parser.add_argument('--data', help="Path of ACE2005 English data", type=Path)
     parser.add_argument('--nlp', help="Standford Core Nlp path", default='./stanford-corenlp-full-2018-10-05', type=Path)
     return parser.parse_args()
 
 
 def main(args):
-    test_files, dev_files, train_files = get_data_paths(args.data)
+    richere_path = args.data
+    test_documents, dev_documents, train_documents = get_document_names(richere_path)
 
     with StanfordCoreNLP(args.nlp, memory='8g', timeout=60000) as nlp:
         # res = nlp.annotate('Donald John Trump is current president of the United States.', properties={'annotators': 'tokenize,ssplit,pos,lemma,parse'})
         # print(res)
-        preprocessing('dev', dev_files)
-        preprocessing('test', test_files)
-        preprocessing('train', train_files)
+        preprocessing(richere_path, 'dev', dev_documents)
+        preprocessing(richere_path, 'test', test_documents)
+        preprocessing(richere_path, 'train', train_documents)
 
 
 if __name__ == '__main__':

@@ -1,21 +1,77 @@
+from typing import List, Tuple
+from pathlib import Path
 from xml.etree import ElementTree
-from bs4 import BeautifulSoup
-import nltk
 import json
 import re
 
+from bs4 import BeautifulSoup
+import nltk
+
+
+ANNOTATIONS_FOLDER = 'ere'
+DOCUMENTS_FOLDER = 'source'
+
 
 class Parser:
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, document_path: Path, annotation_paths: List[Path]):
+        self.path = document_path
         self.entity_mentions = []
         self.event_mentions = []
         self.sentences = []
-        self.sgm_text = ''
+        self.document_text = ''
 
-        self.entity_mentions, self.event_mentions = self.parse_xml(path + '.apf.xml')
-        self.sents_with_pos = self.parse_sgm(path + '.sgm')
+        self.entity_mentions, self.event_mentions = [], []
+        # Sort the paths to make the order of the mentions deterministic
+        for annotation_path in self._sorted_annotation_paths(document_path.stem, annotation_paths):
+            more_entity_mentions, more_event_mentions = self.parse_xml(annotation_path)
+            self.entity_mentions.extend(more_entity_mentions)
+            self.event_mentions.extend(more_event_mentions)
+        self.sents_with_pos = self.parse_document(document_path)
         self.fix_wrong_position()
+
+    @staticmethod
+    def _sorted_annotation_paths(document_name: str, annotation_paths: List[Path]) -> List[Path]:
+        # We sort in increasing order by the start of the annotation range,
+        # which is indicated in the file name by the first number after the document name.
+        # The annotation file names look like
+        # ${document_name}_${start}-${end}.richere.xml
+        def sort_key(path: Path) -> int:
+            # Use len + 1 to get rid of the underscore
+            after_document_prefix = len(document_name) + 1
+            before_end_of_number = path.name[after_document_prefix:].index('-')
+            # before_end_of_number is relative to the sliced string so we have to treat it as an
+            # offset
+            return int(path.name[after_document_prefix:after_document_prefix + before_end_of_number])
+
+        return sorted(annotation_paths, key=sort_key)
+
+    @staticmethod
+    def _get_document_filepath(richere_path: Path, document_name: str) -> Path:
+        return (richere_path / DOCUMENTS_FOLDER / document_name).with_suffix('.xml')
+
+    @staticmethod
+    def _get_annotation_filepaths(richere_path: Path, document_name: str) -> List[Path]:
+        return list((richere_path / ANNOTATIONS_FOLDER).glob(document_name + '*.richere.xml'))
+
+    @staticmethod
+    def from_data_path_and_name(richere_path: Path, document_name: str) -> "Parser":
+        document_path, annotation_paths = Parser._get_and_verify_paths(richere_path, document_name)
+        return Parser(document_path, annotation_paths)
+
+    @staticmethod
+    def _get_and_verify_paths(richere_path: Path, document_name: str) -> Tuple[Path, List[Path]]:
+        document_path = Parser._get_document_filepath(richere_path, document_name)
+        if not document_path.exists():
+            raise RuntimeError(f"No annotations found in {document_path} for document {document_name}.")
+
+        annotation_paths = Parser._get_annotation_filepaths(richere_path, document_name)
+        if not annotation_paths:
+            raise RuntimeError(f"No annotations found in {document_path} for document {document_name}.")
+        return document_path, annotation_paths
+
+    @staticmethod
+    def verify_document(richere_path: Path, document_name: str):
+        Parser._get_and_verify_paths(richere_path, document_name)
 
     @staticmethod
     def clean_text(text):
@@ -99,7 +155,7 @@ class Parser:
     def fix_wrong_position(self):
         for entity_mention in self.entity_mentions:
             offset = self.find_correct_offset(
-                sgm_text=self.sgm_text,
+                sgm_text=self.document_text,
                 start_index=entity_mention['position'][0],
                 text=entity_mention['text'])
 
@@ -110,7 +166,7 @@ class Parser:
 
         for event_mention in self.event_mentions:
             offset1 = self.find_correct_offset(
-                sgm_text=self.sgm_text,
+                sgm_text=self.document_text,
                 start_index=event_mention['trigger']['position'][0],
                 text=event_mention['trigger']['text'])
             event_mention['trigger']['position'][0] += offset1
@@ -118,16 +174,16 @@ class Parser:
 
             for argument in event_mention['arguments']:
                 offset2 = self.find_correct_offset(
-                    sgm_text=self.sgm_text,
+                    sgm_text=self.document_text,
                     start_index=argument['position'][0],
                     text=argument['text'])
                 argument['position'][0] += offset2
                 argument['position'][1] += offset2
 
-    def parse_sgm(self, sgm_path):
+    def parse_document(self, sgm_path):
         with open(sgm_path, 'r') as f:
             soup = BeautifulSoup(f.read(), features='html.parser')
-            self.sgm_text = soup.text
+            self.document_text = soup.text
 
             doc_type = soup.doc.doctype.text.strip()
 
@@ -153,7 +209,7 @@ class Parser:
             sents_with_pos = []
             last_pos = 0
             for sent in sents:
-                pos = self.sgm_text.find(sent, last_pos)
+                pos = self.document_text.find(sent, last_pos)
                 last_pos = pos
                 sents_with_pos.append({
                     'text': sent,
