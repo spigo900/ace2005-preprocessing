@@ -50,7 +50,7 @@ class Parser:
 
     @staticmethod
     def _get_annotation_filepaths(richere_path: Path, document_name: str) -> List[Path]:
-        return list((richere_path / ANNOTATIONS_FOLDER).glob(document_name + '*.richere.xml'))
+        return list((richere_path / ANNOTATIONS_FOLDER).glob(document_name + '*.rich_ere.xml'))
 
     @staticmethod
     def from_data_path_and_name(richere_path: Path, document_name: str) -> "Parser":
