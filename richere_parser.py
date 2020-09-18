@@ -7,6 +7,8 @@ from xml.etree import ElementTree
 from bs4 import BeautifulSoup
 import nltk
 
+nltk.download('punkt')
+
 
 ANNOTATIONS_DIRECTORY = 'ere'
 DOCUMENTS_DIRECTORY = 'source'
