@@ -80,6 +80,9 @@ class Parser:
         return text.replace('\n', ' ')
 
     def get_data(self):
+        """
+        Return a list of (sentence, annotations) pairs for every sentence in the document.
+        """
         data = []
         for sent in self.sents_with_pos:
             item = dict()
@@ -125,7 +128,6 @@ class Parser:
 
                         event_arguments.append({
                             'role': argument['role'],
-                            'position': argument['position'],
                             'entity-type': entity_type,
                             'text': self.clean_text(argument['text']),
                         })
@@ -140,12 +142,12 @@ class Parser:
         return data
 
     # TODO needed for Rich ERE?
-    def find_correct_offset(self, sgm_text, start_index, text):
+    def find_correct_offset(self, document_text, start_index, text):
         offset = 0
         for i in range(0, 70):
             for j in [-1, 1]:
                 offset = i * j
-                if sgm_text[start_index + offset:start_index + offset + len(text)] == text:
+                if document_text[start_index + offset:start_index + offset + len(text)] == text:
                     return offset
 
         print('[Warning] fail to find offset! (start_index: {}, text: {}, path: {})'.format(start_index, text, self.path))
@@ -155,7 +157,7 @@ class Parser:
     def fix_wrong_position(self):
         for entity_mention in self.entity_mentions:
             offset = self.find_correct_offset(
-                sgm_text=self.document_text,
+                document_text=self.document_text,
                 start_index=entity_mention['position'][0],
                 text=entity_mention['text'])
 
@@ -164,7 +166,7 @@ class Parser:
 
         for event_mention in self.event_mentions:
             offset1 = self.find_correct_offset(
-                sgm_text=self.document_text,
+                document_text=self.document_text,
                 start_index=event_mention['trigger']['position'][0],
                 text=event_mention['trigger']['text'])
             event_mention['trigger']['position'][0] += offset1
