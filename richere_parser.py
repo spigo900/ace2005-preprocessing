@@ -164,14 +164,8 @@ class Parser:
 
         Smallest here means smallest in absolute value. So we try 0 first, then +/-1, then +/-2,
         etc. The maximum offset that will be tried is 70 characters.
-        :param document_text:
-        :param start_index:
-        :param text:
-        :return:
         """
-        # Default to an offset of zero.
         offset = 0
-        # Loop over all offsets
         for i in range(0, 70):
             for j in [-1, 1]:
                 offset = i * j
