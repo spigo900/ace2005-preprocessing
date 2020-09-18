@@ -105,10 +105,6 @@ class Parser:
                         'text': self.clean_text(entity_mention['text']),
                         'position': entity_position,
                         'entity-type': entity_mention['entity-type'],
-                        'head': {
-                            "text": self.clean_text(entity_mention['head']["text"]),
-                            "position": entity_mention["head"]["position"]
-                        },
                         "entity_id": entity_mention['entity-id']
                     })
                     entity_map[entity_mention['entity-id']] = entity_mention
@@ -160,8 +156,6 @@ class Parser:
 
             entity_mention['position'][0] += offset
             entity_mention['position'][1] += offset
-            entity_mention['head']["position"][0] += offset
-            entity_mention['head']["position"][1] += offset
 
         for event_mention in self.event_mentions:
             offset1 = self.find_correct_offset(
@@ -184,6 +178,8 @@ class Parser:
             soup = BeautifulSoup(f.read())
             self.document_text = soup.text
 
+            # TODO I might have to store the doc type while processing the annotations for the file;
+            #  see below.
             doc_type = soup.doc.doctype.text.strip()
 
             def remove_tags(selector):
@@ -191,10 +187,15 @@ class Parser:
                 for tag in tags:
                     tag.extract()
 
+            # TODO This isn't needed, I think. For web text, Rich ERE uses attributes, not tags to
+            #  indicate these fields on a post. It also doesn't include subject at all.
             if doc_type == 'WEB TEXT':
                 remove_tags('poster')
                 remove_tags('postdate')
                 remove_tags('subject')
+            # TODO Does Rich ERE even include such doc types? Even if it does I don't think it uses
+            #  the doc tag to indicate this. I think the document type is only indicated in the
+            #  annotation files.
             elif doc_type in ['CONVERSATION', 'STORY']:
                 remove_tags('speaker')
 
@@ -204,6 +205,7 @@ class Parser:
             for sent in nltk.sent_tokenize(converted_text):
                 sents.extend(sent.split('\n\n'))
             sents = [x for x in sents if len(x) > 5]
+            # Do we *want* to drop the first one in Rihc?
             sents = sents[1:]
             sents_with_pos = []
             last_pos = 0
@@ -222,37 +224,90 @@ class Parser:
         tree = ElementTree.parse(xml_path)
         root = tree.getroot()
 
-        for child in root[0]:
-            if child.tag == 'entity':
-                entity_mentions.extend(self.parse_entity_tag(child))
-            elif child.tag in ['value', 'timex2']:
-                entity_mentions.extend(self.parse_value_timex_tag(child))
-            elif child.tag == 'event':
-                event_mentions.extend(self.parse_event_tag(child))
+        def found_entity(entity):
+            entity_mentions.extend(self.parse_entity_tag(entity))
+
+        def found_hopper(hopper):
+            # TODO handle properly
+            event_mentions.extend(self.parse_event_tag(event))
+
+        def found_relation(relation):
+            # TODO handle properly
+            pass
+
+        def found_filler(filler):
+            # TODO handle properly
+            pass
+
+        self._parse_annotation_type(root, 'entities', 'entity', found_entity)
+        # entities = root[0].find('entities')
+        # for child in entities:
+        #     if child.tag == 'entity':
+        #         entity_mentions.extend(self.parse_entity_tag(child))
+        #     else:
+        #         raise RuntimeError(f'While parsing entities, found unexpected child tag {child.tag}')
+
+        self._parse_annotation_type(root, 'fillers', 'filler', found_filler)
+        # fillers = root[0].find('fillers')
+        # for child in fillers:
+        #     if child.tag == 'filler':
+        #         # TODO handle fillers
+        #         pass
+        #     else:
+        #         raise RuntimeError(f'While parsing fillers, found unexpected child tag {child.tag}')
+
+        self._parse_annotation_type(root, 'relations', 'relation', found_relation)
+        # relations = root[0].find('relations')
+        # for child in relations:
+        #     if child.tag == 'relation':
+        #         # TODO handle relations
+        #         pass
+        #     else:
+        #         raise RuntimeError(f'While parsing relations, found unexpected child tag {child.tag}')
+
+        self._parse_annotation_type(root, 'hoppers', 'hopper', found_hopper)
+        # hoppers = root[0].find('hoppers')
+        # for child in hoppers:
+        #     if child.tag == 'hopper':
+        #         # TODO handle hoppers properly
+        #         event_mentions.extend(self.parse_event_tag(child))
+        #     else:
+        #         raise RuntimeError(f'While parsing hoppers, found unexpected child tag {child.tag}')
 
         return entity_mentions, event_mentions
+
+    # TODO is this actually useful?
+    @staticmethod
+    def _parse_annotation_type(root, annotations_type, child_annotation_tag, tag_found_callback):
+        annotations = root[0].find(annotations_type)
+        for child in annotations:
+            if child.tag == child_annotation_tag:
+                tag_found_callback(child)
+            else:
+                raise RuntimeError(f'While parsing {annotations_type}, found unexpected child tag {child.tag}')
 
     @staticmethod
     def parse_entity_tag(node):
         entity_mentions = []
 
         for child in node:
-            if child.tag != 'entity_mention':
-                continue
-            extent = child[0]
-            head = child[1]
-            charset = extent[0]
-            head_charset = head[0]
+            if child.tag == 'entity_mention':
+                mention_text = child[0]
+                assert mention_text.tag == 'mention_text'
 
-            entity_mention = dict()
-            entity_mention['entity-id'] = child.attrib['ID']
-            entity_mention['entity-type'] = '{}:{}'.format(node.attrib['TYPE'], node.attrib['SUBTYPE'])
-            entity_mention['text'] = charset.text
-            entity_mention['position'] = [int(charset.attrib['START']), int(charset.attrib['END'])]
-            entity_mention["head"] = {"text": head_charset.text,
-                                      "position": [int(head_charset.attrib['START']), int(head_charset.attrib['END'])]}
+                start = int(child.attrib['offset'])
+                length = int(child.attrib['length'])
+                end = start + length
 
-            entity_mentions.append(entity_mention)
+                entity_mention = dict()
+                entity_mention['entity-id'] = child.attrib['ID']
+                entity_mention['entity-type'] = '{}:{}'.format(node.attrib['TYPE'], node.attrib['SUBTYPE'])
+                entity_mention['text'] = mention_text.text
+                entity_mention['position'] = [start, end]
+
+                entity_mentions.append(entity_mention)
+            else:
+                raise RuntimeError(f'While parsing entity, found unexpected child {child.tag}.')
 
         return entity_mentions
 
@@ -307,9 +362,6 @@ class Parser:
 
             entity_mention['text'] = charset.text
             entity_mention['position'] = [int(charset.attrib['START']), int(charset.attrib['END'])]
-
-            entity_mention["head"] = {"text": charset.text,
-                                      "position": [int(charset.attrib['START']), int(charset.attrib['END'])]}
 
             entity_mentions.append(entity_mention)
 

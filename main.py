@@ -156,20 +156,6 @@ def preprocessing(richere_path: Path, data_type: str, documents: List[str]):
 
                 del entity_mention['position']
 
-                # head
-                head_position = entity_mention["head"]["position"]
-
-                head_start_idx, head_end_idx = find_token_index(
-                    tokens=tokens,
-                    start_pos=head_position[0] - sent_start_pos,
-                    end_pos=head_position[1] - sent_start_pos + 1,
-                    phrase=entity_mention["head"]["text"]
-                )
-
-                entity_mention["head"]["start"] = head_start_idx
-                entity_mention["head"]["end"] = head_end_idx
-                del entity_mention["head"]["position"]
-
                 data['golden-entity-mentions'].append(entity_mention)
 
             for event_mention in item['golden-event-mentions']:
