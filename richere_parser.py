@@ -228,8 +228,7 @@ class Parser:
             entity_mentions.extend(self.parse_entity_tag(entity))
 
         def found_hopper(hopper):
-            # TODO handle properly
-            event_mentions.extend(self.parse_event_tag(hopper))
+            event_mentions.extend(self.parse_hopper_tag(hopper))
 
         def found_relation(relation):
             # TODO handle properly
@@ -312,34 +311,37 @@ class Parser:
         return entity_mentions
 
     @staticmethod
-    def parse_event_tag(node):
+    def parse_hopper_tag(node):
         event_mentions = []
         for child in node:
             if child.tag == 'event_mention':
                 event_mention = dict()
-                event_mention['event_type'] = '{}:{}'.format(node.attrib['TYPE'], node.attrib['SUBTYPE'])
+                event_mention['event_type'] = '{}:{}'.format(node.attrib['type'], node.attrib['subtype'])
+                event_mention['realis'] = node.attrib['realis']
                 event_mention['arguments'] = []
                 for child2 in child:
-                    if child2.tag == 'ldc_scope':
-                        charset = child2[0]
-                        event_mention['text'] = charset.text
-                        event_mention['position'] = [int(charset.attrib['START']), int(charset.attrib['END'])]
-                    if child2.tag == 'anchor':
-                        charset = child2[0]
+                    if child2.tag == 'trigger':
+                        start = int(child2.attrib['offset'])
+                        length = int(child2.attrib['length'])
+                        end = start + length
                         event_mention['trigger'] = {
-                            'text': charset.text,
-                            'position': [int(charset.attrib['START']), int(charset.attrib['END'])],
+                            'text': child2.text,
+                            'position': [start, end],
                         }
-                    if child2.tag == 'event_mention_argument':
-                        extent = child2[0]
-                        charset = extent[0]
+                    elif child2.tag == 'em_arg':
+                        # TODO position not explicitly given, have to figure out from the entity mention ids
                         event_mention['arguments'].append({
-                            'text': charset.text,
-                            'position': [int(charset.attrib['START']), int(charset.attrib['END'])],
-                            'role': child2.attrib['ROLE'],
-                            'entity-id': child2.attrib['REFID'],
+                            'text': child2.text,
+                            'role': child2.attrib['role'],
+                            'realis': child2.attrib['realis'],
+                            'entity-id': child2.attrib['entity_id'],
+                            'entity-mention-id': child2.attrib['entity_mention_id'],
                         })
+                    else:
+                        raise RuntimeError(f'While parsing event mention, found unexpected child tag {child2.tag}.')
                 event_mentions.append(event_mention)
+            else:
+                raise RuntimeError(f'While parsing event, found unexpected child tag {child2.tag}.')
         return event_mentions
 
     # TODO Does Rich ERE have value/timex tags? I think it doesn't.
