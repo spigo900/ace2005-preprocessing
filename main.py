@@ -97,7 +97,7 @@ def verify_result(data):
     print('Complete verification')
 
 
-def preprocessing(richere_path: Path, data_type: str, documents: List[str]):
+def preprocessing(richere_path: Path, data_type: str, documents: List[str], nlp: StanfordCoreNLP):
     result = []
     event_count, entity_count, sent_count, argument_count = 0, 0, 0, 0
 
@@ -221,9 +221,9 @@ def main(args):
     with StanfordCoreNLP(str(args.nlp), memory='8g', timeout=60000) as nlp:
         # res = nlp.annotate('Donald John Trump is current president of the United States.', properties={'annotators': 'tokenize,ssplit,pos,lemma,parse'})
         # print(res)
-        preprocessing(richere_path, 'dev', dev_documents)
-        preprocessing(richere_path, 'test', test_documents)
-        preprocessing(richere_path, 'train', train_documents)
+        preprocessing(richere_path, 'dev', dev_documents, nlp)
+        preprocessing(richere_path, 'test', test_documents, nlp)
+        preprocessing(richere_path, 'train', train_documents, nlp)
 
 
 if __name__ == '__main__':
