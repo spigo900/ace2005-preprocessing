@@ -1,14 +1,14 @@
-# ACE2005 preprocessing
+# Rich ERE R3 processing
 
-This is a simple code for preprocessing ACE 2005 corpus for Event Extraction task. 
+Code for processing the Rich ERE R3 corpus to JSON files.
 
-Using the existing methods were complicated for me, so I made this project.
+Based on https://github.com/nlpcl-lab/ace2005-preprocessing.
 
 ## Prerequisites
 
-1. Prepare **ACE 2005 dataset**. 
+1. Prepare **Rich ERE R3 dataset**. 
 
-   (Download: https://catalog.ldc.upenn.edu/LDC2006T06. Note that ACE 2005 dataset is not free.)
+   (Download: https://catalog.ldc.upenn.edu/LDC2016E13. The Rich ERE R3 dataset is not (?) free.)
 
 2. Install the packages.
    ```
