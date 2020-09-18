@@ -130,6 +130,7 @@ def preprocessing(richere_path: Path, data_type: str, documents: List[str], nlp:
             if len(nlp_res['sentences']) >= 2:
                 # TODO: issue where the sentence segmentation of NTLK and StandfordCoreNLP do not match
                 # This error occurred so little that it was temporarily ignored (< 20 sentences).
+                logging.warning('NLTK and CoreNLP disagreed on how to split sentence; skipping...')
                 continue
 
             data['stanford-colcc'] = []
@@ -144,8 +145,10 @@ def preprocessing(richere_path: Path, data_type: str, documents: List[str], nlp:
             sent_start_pos = item['position'][0]
 
             # Process entity mentions
+            print(f' tokens are {tokens}')
             for entity_mention in item['golden-entity-mentions']:
                 position = entity_mention['position']
+                print(f'   entity mention at {position}')
                 start_idx, end_idx = find_token_index(
                     tokens=tokens,
                     start_pos=position[0] - sent_start_pos,
