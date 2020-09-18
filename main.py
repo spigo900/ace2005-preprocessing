@@ -232,7 +232,7 @@ def main(args):
     richere_path = args.data
     test_documents, dev_documents, train_documents = get_document_names(richere_path)
 
-    with StanfordCoreNLP(args.nlp, memory='8g', timeout=60000) as nlp:
+    with StanfordCoreNLP(str(args.nlp), memory='8g', timeout=60000) as nlp:
         # res = nlp.annotate('Donald John Trump is current president of the United States.', properties={'annotators': 'tokenize,ssplit,pos,lemma,parse'})
         # print(res)
         preprocessing(richere_path, 'dev', dev_documents)
