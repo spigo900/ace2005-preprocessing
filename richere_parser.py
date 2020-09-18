@@ -179,27 +179,6 @@ class Parser:
             soup = BeautifulSoup(f.read())
             self.document_text = soup.text
 
-            # TODO I might have to store the doc type while processing the annotations for the file;
-            #  see below.
-            doc_type = soup.doc.doctype.text.strip()
-
-            def remove_tags(selector):
-                tags = soup.findAll(selector)
-                for tag in tags:
-                    tag.extract()
-
-            # TODO This isn't needed, I think. For web text, Rich ERE uses attributes, not tags to
-            #  indicate these fields on a post. It also doesn't include subject at all.
-            if doc_type == 'WEB TEXT':
-                remove_tags('poster')
-                remove_tags('postdate')
-                remove_tags('subject')
-            # TODO Does Rich ERE even include such doc types? Even if it does I don't think it uses
-            #  the doc tag to indicate this. I think the document type is only indicated in the
-            #  annotation files.
-            elif doc_type in ['CONVERSATION', 'STORY']:
-                remove_tags('speaker')
-
             sents = []
             converted_text = soup.text
 
