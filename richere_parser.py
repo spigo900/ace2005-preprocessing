@@ -248,7 +248,7 @@ class Parser:
         "NAM": "name",
         # TODO correct gloss?
         "NOM": "nominal-phrase",
-        "PRO": "pronoun"
+        "PRO": "pronoun",
     }
 
     @staticmethod
