@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Mapping, Tuple
 from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
@@ -286,6 +286,13 @@ class Parser:
             else:
                 raise RuntimeError(f'While parsing {annotations_type}, found unexpected child tag {child.tag}')
 
+    _NOUN_TYPE_TO_GLOSS: Mapping[str, str] = {
+        "NAM": "name",
+        # TODO correct gloss?
+        "NOM": "nominal-phrase",
+        "PRO": "pronoun"
+    }
+
     @staticmethod
     def parse_entity_tag(node):
         entity_mentions = []
@@ -300,8 +307,17 @@ class Parser:
                 end = start + length
 
                 entity_mention = dict()
-                entity_mention['entity-id'] = child.attrib['ID']
-                entity_mention['entity-type'] = '{}:{}'.format(node.attrib['TYPE'], node.attrib['SUBTYPE'])
+                entity_mention['entity-id'] = node.attrib['id']
+                entity_type = (
+                    '{}:{}'.format(node.attrib['type'], node.attrib['subtype'])
+                    if 'subtype' in node.attrib
+                    else node.attrib['type']
+                )
+                entity_mention['entity-type'] = entity_type
+                entity_mention['noun-type'] = Parser._NOUN_TYPE_TO_GLOSS[child.attrib['noun_type']]
+                entity_mention['specificity'] = node.attrib['specificity']
+                entity_mention['entity-mention-id'] = child.attrib['id']
+                entity_mention['source'] = child.attrib['source']
                 entity_mention['text'] = mention_text.text
                 entity_mention['position'] = [start, end]
 
