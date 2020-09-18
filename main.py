@@ -142,6 +142,7 @@ def preprocessing(richere_path: Path, data_type: str, documents: List[str], nlp:
 
             sent_start_pos = item['position'][0]
 
+            # Process entity mentions
             for entity_mention in item['golden-entity-mentions']:
                 position = entity_mention['position']
                 start_idx, end_idx = find_token_index(
@@ -158,6 +159,7 @@ def preprocessing(richere_path: Path, data_type: str, documents: List[str], nlp:
 
                 data['golden-entity-mentions'].append(entity_mention)
 
+            # Process event mentions
             for event_mention in item['golden-event-mentions']:
                 # same event mention can be shared
                 event_mention = copy.deepcopy(event_mention)
