@@ -1,24 +1,31 @@
-import os
-import copy
-import re
-from parser import Parser
-import json
-from stanfordcorenlp import StanfordCoreNLP
+from pathlib import Path
 import argparse
-from tqdm import tqdm
+import copy
+import os
+import json
+import re
+# Can I delete this import, or does importing traceback have a side effect?
 import traceback
+from typing import Tuple, List
+
+from stanfordcorenlp import StanfordCoreNLP
+from tqdm import tqdm
+
+from parser import Parser
 
 
-def get_data_paths(ace2005_path):
+DATA_LIST = Path('./data_list.csv')
+
+
+def get_data_paths(richere_path: Path) -> Tuple[List[Path], List[Path], List[Path]]:
     test_files, dev_files, train_files = [], [], []
-    with open('./data_list.csv', mode='r') as csv_file:
+    with DATA_LIST.open(mode='r') as csv_file:
         rows = csv_file.readlines()
         for row in rows[1:]:
             items = row.replace('\n', '').split(',')
-            data_type = items[0]
-            name = items[1]
+            data_type, name = items
 
-            path = os.path.join(ace2005_path, name)
+            path = richere_path / name
             if data_type == 'test':
                 test_files.append(path)
             elif data_type == 'dev':
@@ -214,11 +221,14 @@ def preprocessing(data_type, files):
         json.dump(result, f, indent=2)
 
 
-if __name__ == '__main__':
+def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', help="Path of ACE2005 English data", default='./data/ace_2005_td_v7/data/English')
-    parser.add_argument('--nlp', help="Standford Core Nlp path", default='./stanford-corenlp-full-2018-10-05')
-    args = parser.parse_args()
+    parser.add_argument('--data', help="Path of ACE2005 English data", default='./data/ace_2005_td_v7/data/English', type=Path)
+    parser.add_argument('--nlp', help="Standford Core Nlp path", default='./stanford-corenlp-full-2018-10-05', type=Path)
+    return parser.parse_args()
+
+
+def main(args):
     test_files, dev_files, train_files = get_data_paths(args.data)
 
     with StanfordCoreNLP(args.nlp, memory='8g', timeout=60000) as nlp:
@@ -227,3 +237,7 @@ if __name__ == '__main__':
         preprocessing('dev', dev_files)
         preprocessing('test', test_files)
         preprocessing('train', train_files)
+
+
+if __name__ == '__main__':
+    main(parse_arguments())
