@@ -1,7 +1,8 @@
-from typing import List, Tuple
-from pathlib import Path
-from xml.etree import ElementTree
 import json
+import logging
+from pathlib import Path
+from typing import List, Tuple
+from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
 import nltk
@@ -239,7 +240,7 @@ class Parser:
             pass
 
         self._parse_annotation_type(root, 'entities', 'entity', found_entity)
-        # entities = root[0].find('entities')
+        # entities = root.find('entities')
         # for child in entities:
         #     if child.tag == 'entity':
         #         entity_mentions.extend(self.parse_entity_tag(child))
@@ -247,7 +248,7 @@ class Parser:
         #         raise RuntimeError(f'While parsing entities, found unexpected child tag {child.tag}')
 
         self._parse_annotation_type(root, 'fillers', 'filler', found_filler)
-        # fillers = root[0].find('fillers')
+        # fillers = root.find('fillers')
         # for child in fillers:
         #     if child.tag == 'filler':
         #         # TODO handle fillers
@@ -256,7 +257,7 @@ class Parser:
         #         raise RuntimeError(f'While parsing fillers, found unexpected child tag {child.tag}')
 
         self._parse_annotation_type(root, 'relations', 'relation', found_relation)
-        # relations = root[0].find('relations')
+        # relations = root.find('relations')
         # for child in relations:
         #     if child.tag == 'relation':
         #         # TODO handle relations
@@ -265,7 +266,7 @@ class Parser:
         #         raise RuntimeError(f'While parsing relations, found unexpected child tag {child.tag}')
 
         self._parse_annotation_type(root, 'hoppers', 'hopper', found_hopper)
-        # hoppers = root[0].find('hoppers')
+        # hoppers = root.find('hoppers')
         # for child in hoppers:
         #     if child.tag == 'hopper':
         #         # TODO handle hoppers properly
@@ -278,7 +279,7 @@ class Parser:
     # TODO is this actually useful?
     @staticmethod
     def _parse_annotation_type(root, annotations_type, child_annotation_tag, tag_found_callback):
-        annotations = root[0].find(annotations_type)
+        annotations = root.find(annotations_type)
         for child in annotations:
             if child.tag == child_annotation_tag:
                 tag_found_callback(child)
