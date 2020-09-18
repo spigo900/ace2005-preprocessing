@@ -342,6 +342,7 @@ class Parser:
                 event_mentions.append(event_mention)
         return event_mentions
 
+    # TODO Does Rich ERE have value/timex tags? I think it doesn't.
     @staticmethod
     def parse_value_timex_tag(node):
         entity_mentions = []
