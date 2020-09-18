@@ -10,7 +10,7 @@ from typing import Tuple, List
 from stanfordcorenlp import StanfordCoreNLP
 from tqdm import tqdm
 
-from parser import Parser
+from richere_parser import Parser
 
 
 DATA_LIST = Path('./data_list.csv')
