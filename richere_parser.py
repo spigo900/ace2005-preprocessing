@@ -163,10 +163,10 @@ class Parser:
         as an index into the document text.
 
         Smallest here means smallest in absolute value. So we try 0 first, then +/-1, then +/-2,
-        etc. The maximum offset that will be tried is 70 characters.
+        etc. The maximum offset that will be tried is 10000 characters.
         """
         offset = 0
-        for i in range(0, 70):
+        for i in range(0, 10000):
             for j in [-1, 1]:
                 offset = i * j
                 if document_text[start_index + offset:start_index + offset + len(text)] == text:
