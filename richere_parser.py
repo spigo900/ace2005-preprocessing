@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Mapping, Tuple
 from xml.etree import ElementTree
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 import nltk
 
 nltk.download('punkt')
@@ -201,8 +201,8 @@ class Parser:
 
     def parse_document(self, document_path):
         with open(document_path, 'r') as f:
-            soup = BeautifulSoup(f.read())
-            self.document_text = soup.text
+            soup = BeautifulSoup(f.read(), features='html.parser')
+            self.document_text = self._get_document_text(soup)
 
             sents = []
             converted_text = soup.text
@@ -223,6 +223,26 @@ class Parser:
                 })
 
             return sents_with_pos
+
+    @staticmethod
+    def _get_document_text(soup):
+        return ''.join(Parser._force_include_author(string) for string in soup.strings)
+
+    @staticmethod
+    def _force_include_author(string: NavigableString) -> str:
+        strings = []
+        attrs = string.parent.attrs
+
+        author = attrs.get('author')
+        if author is not None:
+            strings.append(f'By: {author}')
+
+        original_author = attrs.get('original_author')
+        if original_author is not None:
+            strings.append(f'Quote by {original_author}:')
+
+        strings.append(string)
+        return ''.join(strings)
 
     def parse_annotations(self, xml_path):
         entity_mentions, event_mentions = [], []
@@ -274,11 +294,17 @@ class Parser:
         for child in node:
             if child.tag == 'entity_mention':
                 mention_text = child[0]
+                assert mention_text.text.strip() == mention_text.text
                 assert mention_text.tag == 'mention_text'
 
                 start = int(child.attrib['offset'])
                 length = int(child.attrib['length'])
                 end = start + length
+
+                # Strip a trailing quote, because entity names shouldn't have quotes in them.
+                if mention_text.text[-1] == '"':
+                    end -= 1
+                    mention_text.text = mention_text.text[:-1]
 
                 entity_mention = dict()
                 entity_mention['entity-id'] = node.attrib['id']
