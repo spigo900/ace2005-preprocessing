@@ -294,8 +294,13 @@ class Parser:
         for child in node:
             if child.tag == 'entity_mention':
                 mention_text = child[0]
-                assert mention_text.text.strip() == mention_text.text
-                assert mention_text.tag == 'mention_text'
+                mention_id = node.attrib['id']
+                if mention_text.text.strip() != mention_text.text:
+                    raise RuntimeError(f"Mention text `{mention_id}` contains trailing whitespace. "
+                                       f"Got `{mention_text.text}`.")
+                if mention_text.tag != 'mention_text':
+                    raise RuntimeError(f"While parsing entity mention, found unexpected child "
+                                       f"<{child.tag}> (expected <entity_mention>).")
 
                 start = int(child.attrib['offset'])
                 length = int(child.attrib['length'])
