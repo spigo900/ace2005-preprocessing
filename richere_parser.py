@@ -179,7 +179,7 @@ class Parser:
         """
         Loop over the mentions parsed and fix up their positions.
 
-        This means finding the correct offset for each mention and adding the offfset to both
+        This means finding the correct offset for each mention and adding the offset to both
         components of that mention's position.
         """
         for entity_mention in self.entity_mentions:
